@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Library Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --color-bg-primary: #ffffff; --color-bg-secondary: #f3f4f6; --color-text-primary: #1f2937;
+            --color-text-secondary: #4b5563; --color-border: #e5e7eb; --color-accent: #4f46e5;
+            --color-accent-hover: #4338ca; --color-shadow: rgba(0, 0, 0, 0.05);
+        }
+        html.dark {
+            --color-bg-primary: #111827; --color-bg-secondary: #1f2937; --color-text-primary: #f9fafb;
+            --color-text-secondary: #9ca3af; --color-border: #374151; --color-accent: #6366f1;
+            --color-accent-hover: #4f46e5; --color-shadow: rgba(0, 0, 0, 0.2);
+        }
+        body {
+            font-family: 'Inter', sans-serif; background-color: var(--color-bg-secondary);
+            color: var(--color-text-primary); transition: background-color 0.3s, color 0.3s;
+        }
+        .bg-primary { background-color: var(--color-bg-primary); } .bg-secondary { background-color: var(--color-bg-secondary); }
+        .text-primary { color: var(--color-text-primary); } .text-secondary { color: var(--color-text-secondary); }
+        .border-themed { border-color: var(--color-border); }
+        .shadow-themed { box-shadow: 0 4px 6px -1px var(--color-shadow), 0 2px 4px -2px var(--color-shadow); }
+        .scroll-reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
+        .scroll-reveal.visible { opacity: 1; transform: translateY(0); }
+        .animated-gradient {
+            background: linear-gradient(-45deg, #4f46e5, #7c3aed, #db2777, #10b981);
+            background-size: 400% 400%; animation: gradient 15s ease infinite;
+        }
+        @keyframes gradient { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        .cd-card-poster { width: 100px; height: 150px; object-fit: cover; border-radius: 6px; flex-shrink: 0; }
+        .cd-card-placeholder {
+            width: 100px; height: 150px; background-color: var(--color-bg-secondary);
+            border: 1px dashed var(--color-border); border-radius: 6px; display: flex;
+            align-items: center; justify-content: center; color: var(--color-text-secondary);
+            font-size: 0.75rem; text-align: center; flex-shrink: 0;
+        }
+        .cd-item-grid { display: flex; gap: 1rem; }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div id="app" class="min-h-screen">
+
+        <div id="guestView" class="container mx-auto p-4 md:p-8">
+            <header class="relative bg-primary shadow-themed rounded-lg p-6 mb-8 overflow-hidden">
+                <div class="animated-gradient absolute inset-0 opacity-80"></div>
+                <div class="relative flex justify-between items-center">
+                    <div>
+                        <h1 class="text-3xl font-bold text-white" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.2);">Video Library</h1>
+                        <p class="text-white/80">Welcome! Browse our collection or log in.</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button id="theme-toggle-guest" class="p-2 rounded-full bg-white/20 text-white hover:bg-white/30 transition"></button>
+                        <button id="showLoginBtn" class="bg-white text-slate-900 dark:bg-slate-800 dark:text-white font-bold py-2 px-5 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-700 transition-transform transform hover:scale-105">Login / Register</button>
+                    </div>
+                </div>
+            </header>
+            <div class="bg-primary p-6 rounded-lg shadow-themed scroll-reveal">
+                <h2 class="text-2xl font-bold mb-4 text-primary">CD/DVD Catalogue</h2>
+                <div class="flex mb-6">
+                    <input type="text" id="guestSearchInput" class="w-full p-3 border border-themed rounded-l-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-secondary text-primary" placeholder="Search by Title, Director, or Genre...">
+                    <button id="guestSearchBtn" style="background-color: var(--color-accent);" class="text-white px-6 rounded-r-lg hover:opacity-90 transition">Search</button>
+                </div>
+                <div id="guestCatalogue" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+            </div>
+        </div>
+
+        <div id="memberView" class="hidden container mx-auto p-4 md:p-8">
+             <header class="bg-primary shadow-themed rounded-lg p-6 mb-8 flex justify-between items-center">
+                <div><h1 class="text-3xl font-bold text-primary">Member Dashboard</h1><p id="memberWelcome" class="text-secondary">Welcome, [Member Name]!</p></div>
+                <div class="flex items-center space-x-4">
+                    <button id="theme-toggle-member" class="p-2 rounded-full bg-secondary text-primary hover:bg-gray-300 dark:hover:bg-gray-600 transition"></button>
+                    <div id="member-header-buttons">
+                        </div>
+                </div>
+            </header>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-1 space-y-8">
+                    <div class="bg-primary p-6 rounded-lg shadow-themed scroll-reveal"><h3 class="text-xl font-bold mb-4">My Issued CDs</h3><div id="issuedCdsList" class="space-y-4"></div></div>
+                    <div class="bg-primary p-6 rounded-lg shadow-themed scroll-reveal" style="transition-delay: 100ms;"><h3 class="text-xl font-bold mb-4">My Profile</h3><div id="memberProfileInfo"></div></div>
+                </div>
+                <div class="lg:col-span-2 bg-primary p-6 rounded-lg shadow-themed scroll-reveal" style="transition-delay: 200ms;">
+                    <h2 class="text-2xl font-bold mb-4">Browse & Request CDs</h2>
+                    <div class="flex mb-4">
+                        <input type="text" id="memberSearchInput" class="w-full p-3 border border-themed rounded-l-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-secondary text-primary" placeholder="Search for CDs to issue...">
+                        <button id="memberSearchBtn" style="background-color: var(--color-accent);" class="text-white px-6 rounded-r-lg hover:opacity-90 transition">Search</button>
+                    </div>
+                    <div id="memberCatalogue" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="librarianView" class="hidden container mx-auto p-4 md:p-8">
+            <header class="bg-primary shadow-themed rounded-lg p-6 mb-8 flex justify-between items-center">
+                <div><h1 class="text-3xl font-bold text-primary">Librarian Panel</h1><p class="text-secondary">Manage library operations.</p></div>
+                <div class="flex items-center space-x-4">
+                     <button id="theme-toggle-librarian" class="p-2 rounded-full bg-secondary text-primary hover:bg-gray-300 dark:hover:bg-gray-600 transition"></button>
+                    <button id="logoutBtnLibrarian" class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition">Logout</button>
+                </div>
+            </header>
+            <div class="mb-4 border-b border-themed"><nav class="flex -mb-px" id="librarianTabs"></nav></div>
+            <div id="manageMembers" class="librarian-tab-content bg-primary p-6 rounded-lg shadow-themed scroll-reveal"></div>
+            <div id="manageInventory" class="librarian-tab-content hidden bg-primary p-6 rounded-lg shadow-themed scroll-reveal"></div>
+            <div id="transactions" class="librarian-tab-content hidden bg-primary p-6 rounded-lg shadow-themed scroll-reveal"></div>
+        </div>
+
+        <div id="managementView" class="hidden container mx-auto p-4 md:p-8">
+            <header class="bg-primary shadow-themed rounded-lg p-6 mb-8 flex justify-between items-center">
+                <div><h1 class="text-3xl font-bold text-primary">Management Reports</h1><p class="text-secondary">Library performance overview.</p></div>
+                <div class="flex items-center space-x-4">
+                     <button id="theme-toggle-management" class="p-2 rounded-full bg-secondary text-primary hover:bg-gray-300 dark:hover:bg-gray-600 transition"></button>
+                    <button id="logoutBtnManagement" class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition">Logout</button>
+                </div>
+            </header>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="bg-primary p-6 rounded-lg shadow-themed flex items-center space-x-4 scroll-reveal"><div class="bg-indigo-100 dark:bg-indigo-900/50 p-3 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg></div><div><p class="text-sm text-secondary">Total Members</p><p id="totalMembersStat" class="text-2xl font-bold"></p></div></div>
+                <div class="bg-primary p-6 rounded-lg shadow-themed flex items-center space-x-4 scroll-reveal" style="transition-delay: 100ms;"><div class="bg-green-100 dark:bg-green-900/50 p-3 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg></div><div><p class="text-sm text-secondary">Total CDs in Library</p><p id="totalCdsStat" class="text-2xl font-bold"></p></div></div>
+                <div class="bg-primary p-6 rounded-lg shadow-themed flex items-center space-x-4 scroll-reveal" style="transition-delay: 200ms;"><div class="bg-yellow-100 dark:bg-yellow-900/50 p-3 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-yellow-600 dark:text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01M12 12v.01M12 12c-1.657 0-3-.895-3-2s1.343-2 3-2m0 8c1.11 0 2.08-.402 2.599-1M12 12V7m0 1v.01" /></svg></div><div><p class="text-sm text-secondary">Total Fines Collected</p><p id="totalFinesStat" class="text-2xl font-bold"></p></div></div>
+            </div>
+            <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-primary p-6 rounded-lg shadow-themed scroll-reveal"><h3 class="text-xl font-bold mb-4">CDs by Genre</h3><div class="h-80"><canvas id="genreChart"></canvas></div></div>
+                <div class="bg-primary p-6 rounded-lg shadow-themed scroll-reveal" style="transition-delay: 100ms;"><h3 class="text-xl font-bold mb-4">Recent Transactions</h3><div id="recentTransactionsList" class="space-y-3"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="loginModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-50">
+        <div class="bg-primary rounded-lg shadow-xl w-full max-w-md m-4 relative scroll-reveal">
+            <div class="p-6">
+                <h2 class="text-2xl font-bold text-center mb-6 text-primary">Login</h2>
+                <input id="usernameInput" class="w-full p-3 mb-4 border border-themed rounded-lg bg-secondary text-primary" type="text" placeholder="Username (e.g., Saikat@345, Rani@2111)">
+                <input id="passwordInput" class="w-full p-3 mb-4 border border-themed rounded-lg bg-secondary text-primary" type="password" placeholder="Password (any)">
+                <button id="loginBtn" style="background-color: var(--color-accent);" class="w-full text-white font-bold py-3 rounded-lg hover:opacity-90 transition">Login</button>
+            </div>
+             <button id="hideLoginBtn" class="absolute top-0 right-0 mt-4 mr-4 text-secondary hover:text-primary">&times;</button>
+        </div>
+    </div>
+
+    <div id="alertModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-50">
+        <div class="bg-primary rounded-lg shadow-xl w-full max-w-sm m-4 p-6 text-center scroll-reveal">
+            <p id="alertMessage" class="mb-6 text-lg text-primary"></p>
+            <button id="hideAlertBtn" style="background-color: var(--color-accent);" class="text-white font-bold py-2 px-8 rounded-lg hover:opacity-90 transition">OK</button>
+        </div>
+    </div>
+
+    <script>
+        // --- MOCK DATABASE ---
+        const db = {
+            users: [
+                { id: 1, username: 'Saikat@345', role: 'guest', name: 'Saikat Mondal', maxCds: 2 },
+                { id: 2, username: 'Rani@2111', role: 'member', name: 'Sadhana Bag', maxCds: 5 },
+                { id: 3, username: 'MohaRani', role: 'librarian', name: 'Ruchika' },
+                { id: 4, username: 'MSD7', role: 'management', name: 'Rounak Maitra' },
+            ],
+            cds: [
+                { id: 101, title: 'The Matrix', director: 'Wachowskis', genre: 'Sci-Fi', copies: 3, available: 2, poster: 'the_matrix.webp' },
+                { id: 102, title: 'Inception', director: 'Christopher Nolan', genre: 'Sci-Fi', copies: 4, available: 4, poster: 'inception.webp' },
+                { id: 103, title: 'The Godfather', director: 'Francis Ford Coppola', genre: 'Crime', copies: 2, available: 0, poster: 'the_godfather.webp' },
+                { id: 104, title: 'Pulp Fiction', director: 'Quentin Tarantino', genre: 'Crime', copies: 5, available: 5, poster: 'pulp_fiction.webp' },
+                { id: 105, title: 'Forrest Gump', director: 'Robert Zemeckis', genre: 'Drama', copies: 3, available: 3, poster: 'forrest_gump.webp' },
+                { id: 106, title: 'The Shawshank Redemption', director: 'Frank Darabont', genre: 'Drama', copies: 1, available: 1, poster: 'shawshank_redemption.webp' },
+                { id: 107, title: 'Spirited Away', director: 'Hayao Miyazaki', genre: 'Animation', copies: 4, available: 2, poster: 'spirited_away.webp' },
+                { id: 108, title: 'Interstellar', director: 'Christopher Nolan', genre: 'Sci-Fi', copies: 3, available: 3, poster: 'interstellar.webp' },
+                { id: 109, title: 'Parasite', director: 'Bong Joon-ho', genre: 'Thriller', copies: 2, available: 2, poster: 'parasite.webp' },
+                { id: 110, title: 'Your Name', director: 'Makoto Shinkai', genre: 'Animation', copies: 3, available: 1, poster: 'your_name.webp' },
+            ],
+            transactions: [
+                { id: 1001, userId: 1, cdId: 101, type: 'issue', issueDate: '2025-08-15', dueDate: '2025-08-29', returnDate: null, renewals: 0, fine: 0 },
+                { id: 1002, userId: 2, cdId: 107, type: 'issue', issueDate: '2025-09-01', dueDate: '2025-09-15', returnDate: null, renewals: 0, fine: 0 },
+                { id: 1004, userId: 1, cdId: 105, type: 'return', issueDate: '2025-08-10', returnDate: '2025-08-24', fine: 0 },
+                { id: 1005, userId: 2, cdId: 110, type: 'issue', issueDate: '2025-10-01', dueDate: '2025-10-15', returnDate: null, renewals: 0, fine: 0 },
+            ],
+            librarySettings: { loanPeriodDays: 14, maxRenewals: 2, finePerDay: 1.50 }
+        };
+
+        // --- APPLICATION STATE ---
+        let currentUser = null;
+        let currentTheme = localStorage.getItem('theme') || 'light';
+
+        // --- ON PAGE LOAD ---
+        document.addEventListener('DOMContentLoaded', () => {
+            applyTheme(currentTheme);
+            renderGuestCatalogue();
+            initializeEventListeners();
+            initScrollAnimations();
+        });
+        
+        // --- EVENT LISTENERS ---
+        function initializeEventListeners() {
+            const showLoginBtn = document.getElementById('showLoginBtn');
+            const hideLoginBtn = document.getElementById('hideLoginBtn');
+            const loginBtn = document.getElementById('loginBtn');
+            const hideAlertBtn = document.getElementById('hideAlertBtn');
+            const guestSearchBtn = document.getElementById('guestSearchBtn');
+            const memberSearchBtn = document.getElementById('memberSearchBtn');
+            const memberCatalogue = document.getElementById('memberCatalogue');
+            const librarianTabs = document.getElementById('librarianTabs');
+
+            showLoginBtn.addEventListener('click', showLoginModal);
+            hideLoginBtn.addEventListener('click', hideLoginModal);
+            loginBtn.addEventListener('click', login);
+            hideAlertBtn.addEventListener('click', hideAlertModal);
+            guestSearchBtn.addEventListener('click', () => searchCatalogue('guest'));
+            memberSearchBtn.addEventListener('click', () => searchCatalogue('member'));
+            
+            memberCatalogue.addEventListener('click', handleCatalogueClick);
+            librarianTabs.addEventListener('click', handleTabClick);
+        }
+
+        // --- THEME MANAGEMENT ---
+        function applyTheme(theme) {
+            currentTheme = theme;
+            localStorage.setItem('theme', theme);
+            document.documentElement.classList.toggle('dark', theme === 'dark');
+            updateThemeToggleIcons();
+            if (currentUser && currentUser.role === 'management' && typeof genreChartInstance !== 'undefined' && genreChartInstance) {
+                renderManagementDashboard();
+            }
+        }
+
+        function toggleTheme() {
+            applyTheme(currentTheme === 'light' ? 'dark' : 'light');
+        }
+        
+        function updateThemeToggleIcons() {
+            const sunIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
+            const moonIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+            document.querySelectorAll('[id^="theme-toggle-"]').forEach(btn => {
+                btn.innerHTML = currentTheme === 'light' ? moonIcon : sunIcon;
+                btn.onclick = toggleTheme; 
+            });
+        }
+        
+        // --- AUTH & VIEW MANAGEMENT ---
+        function showLoginModal() { document.getElementById('loginModal').classList.replace('hidden', 'flex'); }
+        function hideLoginModal() { document.getElementById('loginModal').classList.replace('flex', 'hidden'); }
+        
+        function login() {
+            const username = document.getElementById('usernameInput').value.trim();
+            const user = db.users.find(u => u.username === username);
+            if (user) {
+                currentUser = user;
+                hideLoginModal();
+                switchView(user.role);
+            } else {
+                customAlert("User not found.");
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            switchView(null);
+        }
+
+        function switchView(role) {
+            ['guestView', 'memberView', 'librarianView', 'managementView'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+
+            switch (role) {
+                case 'guest':
+                case 'member':
+                    document.getElementById('memberView').classList.remove('hidden');
+                    renderMemberDashboard();
+                    break;
+                case 'librarian':
+                    document.getElementById('librarianView').classList.remove('hidden');
+                    renderLibrarianDashboard();
+                    break;
+                case 'management':
+                    document.getElementById('managementView').classList.remove('hidden');
+                    renderManagementDashboard();
+                    break;
+                default:
+                    document.getElementById('guestView').classList.remove('hidden');
+                    renderGuestCatalogue();
+            }
+            initScrollAnimations();
+        }
+
+        // --- EVENT HANDLERS ---
+        function handleCatalogueClick(event) {
+            const issueButton = event.target.closest('.issue-btn');
+            if (issueButton) {
+                const cdId = parseInt(issueButton.dataset.cdId);
+                issueCd(cdId);
+            }
+        }
+        
+        function handleTabClick(event) {
+            event.preventDefault();
+            const tab = event.target.closest('.librarian-tab');
+            if (tab) {
+                const tabName = tab.dataset.tabName;
+                if (tabName) showTab(tabName);
+            }
+        }
+
+        // --- RENDERING ---
+        function getPosterHtml(cd) {
+            const posterPath = cd.poster ? `images/${cd.poster}` : null;
+            if (posterPath) {
+                return `<img src="${posterPath}" alt="${cd.title} Poster" class="cd-card-poster">`;
+            }
+            return `<div class="cd-card-placeholder">No Poster</div>`;
+        }
+
+        function createCdCard(cd, userType) {
+            let actionButton = '';
+            if (userType === 'member' || userType === 'guest') { // Allow guests to see the buttons too
+                if (cd.available > 0) {
+                    actionButton = `<button class="issue-btn mt-4 w-full text-white font-bold py-2 px-4 rounded-lg hover:opacity-90 transition" style="background-color: var(--color-accent);" data-cd-id="${cd.id}">Issue</button>`;
+                } else {
+                    actionButton = `<button class="mt-4 w-full bg-yellow-500 text-white font-bold py-2 px-4 rounded-lg cursor-not-allowed" disabled>On Hold</button>`;
+                }
+            }
+            return `
+                <div class="bg-primary border border-themed rounded-lg p-4 flex flex-col justify-between hover:shadow-xl transition-shadow duration-300 scroll-reveal">
+                    <div class="cd-item-grid">
+                        ${getPosterHtml(cd)}
+                        <div class="flex-grow">
+                            <h3 class="font-bold text-lg text-primary">${cd.title}</h3>
+                            <p class="text-sm text-secondary">by ${cd.director}</p>
+                            <p class="text-sm text-secondary mt-1">Genre: ${cd.genre}</p>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <p class="text-sm font-medium ${cd.available > 0 ? 'text-green-500' : 'text-red-500'}">
+                            ${cd.available > 0 ? `${cd.available} of ${cd.copies} available` : 'Not Available'}
+                        </p>
+                        ${actionButton}
+                    </div>
+                </div>`;
+        }
+        
+        function renderCatalogue(elementId, cds, userType) {
+            const container = document.getElementById(elementId);
+            if (!cds.length) { container.innerHTML = `<p class="text-secondary col-span-full">No CDs found.</p>`; return; }
+            container.innerHTML = cds.map(cd => createCdCard(cd, userType)).join('');
+        }
+
+        function renderGuestCatalogue() { renderCatalogue('guestCatalogue', db.cds, null); } // Logged-out guests see no buttons
+
+        function renderMemberDashboard() {
+            document.getElementById('memberWelcome').innerText = `Welcome, ${currentUser.name}!`;
+            
+            const memberHeaderButtons = document.getElementById('member-header-buttons');
+            if (currentUser.role === 'guest') {
+                memberHeaderButtons.innerHTML = `<button class="bg-gray-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-600 transition" id="logoutBtnGuest">Exit Guest Session</button>`;
+                document.getElementById('logoutBtnGuest').addEventListener('click', logout);
+            } else { // 'member' role
+                memberHeaderButtons.innerHTML = `<button class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition" id="logoutBtnMember">Logout</button>`;
+                document.getElementById('logoutBtnMember').addEventListener('click', logout);
+            }
+            
+            renderIssuedCds();
+            renderMemberProfile();
+            renderCatalogue('memberCatalogue', db.cds, currentUser.role);
+        }
+
+        function renderIssuedCds() {
+            const issued = db.transactions.filter(t => t.userId === currentUser.id && t.type === 'issue' && !t.returnDate);
+            const container = document.getElementById('issuedCdsList');
+            if (!issued.length) {
+                container.innerHTML = `<p class="text-secondary">You have no CDs currently issued.</p>`;
+                return;
+            }
+            container.innerHTML = issued.map(t => {
+                const cd = db.cds.find(c => c.id === t.cdId);
+                const isOverdue = new Date(t.dueDate) < new Date();
+                return `
+                    <div class="border-l-4 ${isOverdue ? 'border-red-500' : 'border-indigo-500'} p-3 bg-secondary rounded-r-lg flex items-center gap-4">
+                        ${getPosterHtml(cd)}
+                        <div>
+                            <p class="font-semibold text-primary">${cd.title}</p>
+                            <p class="text-sm text-secondary">Due: ${t.dueDate}</p>
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+        
+        function renderMemberProfile() {
+            const issuedCount = db.transactions.filter(t => t.userId === currentUser.id && t.type === 'issue' && !t.returnDate).length;
+            document.getElementById('memberProfileInfo').innerHTML = `
+                <p class="text-secondary"><strong class="font-medium text-primary">Name:</strong> ${currentUser.name}</p>
+                <p class="text-secondary"><strong class="font-medium text-primary">Member ID:</strong> ${currentUser.id}</p>
+                <p class="text-secondary"><strong class="font-medium text-primary">CD Limit:</strong> ${issuedCount} / ${currentUser.maxCds}</p>`;
+        }
+        
+        function renderLibrarianDashboard() {
+            renderLibrarianTabs();
+            showTab('manageMembers');
+            renderManageMembers();
+            renderManageInventory();
+            renderTransactions();
+        }
+
+        function renderLibrarianTabs() {
+            const tabsContainer = document.getElementById('librarianTabs');
+            const tabs = [ { name: 'Manage Members', id: 'manageMembers'}, { name: 'Manage Inventory', id: 'manageInventory'}, { name: 'Transactions', id: 'transactions'}, ];
+            tabsContainer.innerHTML = tabs.map((tab, index) => `<a href="#" class="librarian-tab ${index === 0 ? 'border-indigo-500 text-indigo-500' : 'text-secondary hover:text-primary hover:border-gray-400 dark:hover:border-gray-500'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${index > 0 ? 'ml-8' : ''}" data-tab-name="${tab.id}">${tab.name}</a>`).join('');
+        }
+
+        function renderManageMembers() {
+             document.getElementById('manageMembers').innerHTML = `<h3 class="text-xl font-bold mb-4">Member Administration</h3><div class="overflow-x-auto"><table class="w-full text-left text-secondary"><thead><tr class="bg-secondary"><th class="p-3 font-semibold text-primary">Name</th><th class="p-3 font-semibold text-primary">CDs Issued</th><th class="p-3 font-semibold text-primary">Actions</th></tr></thead><tbody>${db.users.filter(u => u.role === 'member' || u.role === 'guest').map(m => `<tr class="border-b border-themed"><td class="p-3">${m.name}</td><td>${db.transactions.filter(t => t.userId === m.id && t.type === 'issue' && !t.returnDate).length} / ${m.maxCds}</td><td><button class="font-medium text-indigo-500 hover:underline">Edit</button></td></tr>`).join('')}</tbody></table></div>`;
+        }
+
+        function renderManageInventory() {
+             document.getElementById('manageInventory').innerHTML = `<h3 class="text-xl font-bold mb-4">CD/DVD Inventory</h3><div class="overflow-x-auto"><table class="w-full text-left text-secondary"><thead><tr class="bg-secondary"><th class="p-3 font-semibold text-primary">Title</th><th class="p-3 font-semibold text-primary">Total</th><th class="p-3 font-semibold text-primary">Available</th><th class="p-3 font-semibold text-primary">Actions</th></tr></thead><tbody>${db.cds.map(cd => `<tr class="border-b border-themed"><td class="p-3">${cd.title}</td><td>${cd.copies}</td><td>${cd.available}</td><td><button class="font-medium text-indigo-500 hover:underline">Edit</button></td></tr>`).join('')}</tbody></table></div>`;
+        }
+
+        function renderTransactions() {
+            const overdue = db.transactions.filter(t => t.type === 'issue' && !t.returnDate && new Date(t.dueDate) < new Date());
+            document.getElementById('transactions').innerHTML = `<h3 class="text-xl font-bold mb-4">Process Returns & Fines</h3><h4 class="font-semibold mt-6 mb-2">Overdue Items</h4>${overdue.length > 0 ? overdue.map(t => {const member = db.users.find(u => u.id === t.userId); const cd = db.cds.find(c => c.id === t.cdId); const fine = ((new Date() - new Date(t.dueDate)) / (1000 * 60 * 60 * 24) * db.librarySettings.finePerDay).toFixed(2); return `<div class="p-3 border border-themed rounded mb-2 flex items-center gap-4"><p><strong class="text-primary">${member.name}</strong> | <strong>${cd.title}</strong></p><p class="text-red-500">Overdue. Fine: $${fine}</p></div>`}).join('') : '<p class="text-secondary">No overdue items.</p>'}`;
+        }
+        
+        let genreChartInstance = null;
+        function renderManagementDashboard() {
+            document.getElementById('totalMembersStat').innerText = db.users.filter(u => u.role === 'member' || u.role === 'guest').length;
+            document.getElementById('totalCdsStat').innerText = db.cds.reduce((s, cd) => s + cd.copies, 0);
+            document.getElementById('totalFinesStat').innerText = `$${db.transactions.reduce((s, t) => s + t.fine, 0).toFixed(2)}`;
+            
+            const recent = db.transactions.slice().reverse().slice(0, 5);
+            document.getElementById('recentTransactionsList').innerHTML = recent.map(t => `<div class="p-3 bg-secondary rounded-md text-sm"><strong class="text-primary">${db.users.find(u=>u.id===t.userId).name}</strong> ${t.type}d <em>${db.cds.find(c=>c.id===t.cdId)?.title || ''}</em></div>`).join('');
+            
+            const ctx = document.getElementById('genreChart').getContext('2d');
+            const genreCounts = db.cds.reduce((acc, cd) => { acc[cd.genre] = (acc[cd.genre] || 0) + cd.copies; return acc; }, {});
+            if (genreChartInstance) genreChartInstance.destroy();
+            genreChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: { labels: Object.keys(genreCounts), datasets: [{ data: Object.values(genreCounts), backgroundColor: ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#6366f1'], hoverOffset: 4 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: currentTheme === 'dark' ? '#f9fafb' : '#1f2937' } } } }
+            });
+        }
+        
+        // --- ACTIONS ---
+        function searchCatalogue(userType) {
+            const searchTerm = document.getElementById(`${userType || 'guest'}SearchInput`).value.toLowerCase();
+            const filtered = db.cds.filter(cd => cd.title.toLowerCase().includes(searchTerm) || cd.director.toLowerCase().includes(searchTerm) || cd.genre.toLowerCase().includes(searchTerm));
+            renderCatalogue(`${userType || 'guest'}Catalogue`, filtered, userType);
+            initScrollAnimations();
+        }
+
+        function issueCd(cdId) {
+            if (!currentUser) return; // Should not happen if button is not visible, but a good safeguard
+            if (currentUser.role === 'guest') {
+                customAlert("Guests can browse but not issue CDs. Please register to become a full member!");
+                return;
+            }
+            const issuedCount = db.transactions.filter(t => t.userId === currentUser.id && t.type === 'issue' && !t.returnDate).length;
+            if (issuedCount >= currentUser.maxCds) {
+                customAlert("You have reached your maximum issue limit.");
+                return;
+            }
+            const cd = db.cds.find(c => c.id === cdId);
+            if (cd && cd.available > 0) {
+                cd.available--;
+                const issueDate = new Date();
+                const dueDate = new Date();
+                dueDate.setDate(issueDate.getDate() + db.librarySettings.loanPeriodDays);
+                db.transactions.push({ id: Date.now(), userId: currentUser.id, cdId: cd.id, type: 'issue', issueDate: issueDate.toISOString().split('T')[0], dueDate: dueDate.toISOString().split('T')[0], returnDate: null, renewals: 0, fine: 0 });
+                customAlert(`"${cd.title}" has been issued to you. Due date: ${dueDate.toISOString().split('T')[0]}`);
+                renderMemberDashboard();
+            } else {
+                customAlert("Sorry, this CD is not available.");
+            }
+        }
+        
+        function showTab(tabName) {
+            document.querySelectorAll('.librarian-tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(tabName).classList.remove('hidden');
+            document.querySelectorAll('.librarian-tab').forEach(el => {
+                el.classList.remove('border-indigo-500', 'text-indigo-500');
+                el.classList.add('text-secondary', 'hover:text-primary');
+            });
+            document.querySelector(`.librarian-tab[data-tab-name="${tabName}"]`).classList.add('border-indigo-500', 'text-indigo-500');
+        }
+
+        // --- UTILITIES ---
+        function customAlert(message) {
+            document.getElementById('alertMessage').innerText = message;
+            document.getElementById('alertModal').classList.replace('hidden', 'flex');
+        }
+        function hideAlertModal() { document.getElementById('alertModal').classList.replace('flex', 'hidden'); }
+
+        function initScrollAnimations() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) entry.target.classList.add('visible');
+                });
+            }, { threshold: 0.1 });
+            document.querySelectorAll('.scroll-reveal').forEach(el => observer.observe(el));
+        }
+    </script>
+</body>
+</html>
