@@ -1,0 +1,258 @@
+{
+    "users": [
+        {
+            "id": 1,
+            "username": "Saikat@345",
+            "password": "2005",
+            "role": "guest",
+            "name": "Saikat Mondal",
+            "maxCds": 2
+        },
+        {
+            "id": 2,
+            "username": "Rani@2111",
+            "password": "2111",
+            "role": "member",
+            "name": "Sadhana Bag",
+            "maxCds": 5
+        },
+        {
+            "id": 3,
+            "username": "Ruchika",
+            "password": "123",
+            "role": "librarian",
+            "name": "Ruchika Sharrof"
+        },
+        {
+            "id": 4,
+            "username": "MSD7",
+            "password": "2004",
+            "role": "management",
+            "name": "Rounak Maitra"
+        }
+    ],
+    "cds": [
+        {
+            "id": 101,
+            "title": "The Matrix",
+            "director": "Wachowskis",
+            "genre": "Sci-Fi",
+            "copies": 3,
+            "available": 0,
+            "poster": "the_matrix.webp"
+        },
+        {
+            "id": 102,
+            "title": "Inception",
+            "director": "Christopher Nolan",
+            "genre": "Sci-Fi",
+            "copies": 4,
+            "available": 3,
+            "poster": "inception.webp"
+        },
+        {
+            "id": 103,
+            "title": "The Godfather",
+            "director": "Francis Ford Coppola",
+            "genre": "Crime",
+            "copies": 2,
+            "available": 0,
+            "poster": "the_godfather.webp"
+        },
+        {
+            "id": 104,
+            "title": "Pulp Fiction",
+            "director": "Quentin Tarantino",
+            "genre": "Crime",
+            "copies": 5,
+            "available": 4,
+            "poster": "pulp_fiction.webp"
+        },
+        {
+            "id": 105,
+            "title": "Forrest Gump",
+            "director": "Robert Zemeckis",
+            "genre": "Drama",
+            "copies": 3,
+            "available": 3,
+            "poster": "forrest_gump.webp"
+        },
+        {
+            "id": 106,
+            "title": "The Shawshank Redemption",
+            "director": "Frank Darabont",
+            "genre": "Drama",
+            "copies": 1,
+            "available": 0,
+            "poster": "shawshank_redemption.webp"
+        },
+        {
+            "id": 107,
+            "title": "Spirited Away",
+            "director": "Hayao Miyazaki",
+            "genre": "Animation",
+            "copies": 4,
+            "available": 1,
+            "poster": "spirited_away.webp"
+        },
+        {
+            "id": 108,
+            "title": "Interstellar",
+            "director": "Christopher Nolan",
+            "genre": "Sci-Fi",
+            "copies": 3,
+            "available": 3,
+            "poster": "interstellar.webp"
+        },
+        {
+            "id": 109,
+            "title": "Parasite",
+            "director": "Bong Joon-ho",
+            "genre": "Thriller",
+            "copies": 2,
+            "available": 2,
+            "poster": "parasite.webp"
+        },
+        {
+            "id": 110,
+            "title": "Your Name",
+            "director": "Makoto Shinkai",
+            "genre": "Animation",
+            "copies": 3,
+            "available": 1,
+            "poster": "your_name.webp"
+        },
+        {
+            "id": 111,
+            "title": "The Dark Knight",
+            "director": "Christopher Nolan",
+            "genre": "Action",
+            "copies": 5,
+            "available": 5,
+            "poster": "dark_knight.webp"
+        },
+        {
+            "id": 112,
+            "title": "Fight Club",
+            "director": "David Fincher",
+            "genre": "Drama",
+            "copies": 2,
+            "available": 1,
+            "poster": "fight_club.webp"
+        },
+        {
+            "id": 113,
+            "title": "Goodfellas",
+            "director": "Martin Scorsese",
+            "genre": "Crime",
+            "copies": 3,
+            "available": 2,
+            "poster": "goodfellas.webp"
+        },
+        {
+            "id": 114,
+            "title": "Schindler's List",
+            "director": "Steven Spielberg",
+            "genre": "History",
+            "copies": 2,
+            "available": 2,
+            "poster": "schindlers_list.webp"
+        },
+        {
+            "id": 115,
+            "title": "Avengers: Endgame",
+            "director": "Russo Brothers",
+            "genre": "Action",
+            "copies": 6,
+            "available": 4,
+            "poster": "endgame.webp"
+        }
+    ],
+    "transactions": [
+        {
+            "id": 1765981606,
+            "userId": 1,
+            "cdId": 101,
+            "type": "issue",
+            "issueDate": "2025-12-17",
+            "dueDate": "2025-12-31",
+            "returnDate": null,
+            "fine": 0
+        },
+        {
+            "id": 1765981612,
+            "userId": 1,
+            "cdId": 105,
+            "type": "issue",
+            "issueDate": "2025-12-17",
+            "dueDate": "2025-12-31",
+            "returnDate": "2025-12-17",
+            "fine": 0
+        },
+        {
+            "id": 1765981648,
+            "userId": 2,
+            "cdId": 101,
+            "type": "issue",
+            "issueDate": "2025-12-17",
+            "dueDate": "2025-12-31",
+            "returnDate": null,
+            "fine": 0
+        },
+        {
+            "id": 1765981650,
+            "userId": 2,
+            "cdId": 102,
+            "type": "issue",
+            "issueDate": "2025-12-17",
+            "dueDate": "2025-12-31",
+            "returnDate": null,
+            "fine": 0
+        },
+        {
+            "id": 1765981652,
+            "userId": 2,
+            "cdId": 104,
+            "type": "issue",
+            "issueDate": "2025-12-17",
+            "dueDate": "2025-12-31",
+            "returnDate": "2025-12-17",
+            "fine": 0
+        },
+        {
+            "id": 1765981654,
+            "userId": 2,
+            "cdId": 106,
+            "type": "issue",
+            "issueDate": "2025-12-17",
+            "dueDate": "2025-12-31",
+            "returnDate": null,
+            "fine": 0
+        },
+        {
+            "id": 1765981656,
+            "userId": 2,
+            "cdId": 107,
+            "type": "issue",
+            "issueDate": "2025-12-17",
+            "dueDate": "2025-12-31",
+            "returnDate": null,
+            "fine": 0
+        },
+        {
+            "id": 1765990125,
+            "userId": 1,
+            "cdId": 104,
+            "type": "issue",
+            "issueDate": "2025-12-17",
+            "dueDate": "2025-12-31",
+            "returnDate": null,
+            "fine": 0
+        }
+    ],
+    "librarySettings": {
+        "loanPeriodDays": 14,
+        "maxRenewals": 2,
+        "finePerDay": 1.5
+    }
+}
